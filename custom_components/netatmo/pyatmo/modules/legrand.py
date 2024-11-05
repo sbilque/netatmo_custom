@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from ..modules.module import (
+    ApplianceTypeMixin,
     BatteryMixin,
     ContactorMixin,
     DimmableMixin,
@@ -36,19 +37,19 @@ class NLT(DimmableMixin, FirmwareMixin, BatteryMixin, SwitchMixin, Module):
     """Legrand global remote control...but also wireless switch, like NLD."""
 
 
-class NLP(Switch, OffloadMixin):
+class NLP(Switch, OffloadMixin, ApplianceTypeMixin):
     """Legrand plug."""
 
 
-class NLPM(Switch, OffloadMixin):
+class NLPM(Switch, OffloadMixin, ApplianceTypeMixin):
     """Legrand mobile plug."""
 
 
-class NLPO(ContactorMixin, OffloadMixin, Switch):
+class NLPO(ContactorMixin, OffloadMixin, ApplianceTypeMixin, Switch):
     """Legrand contactor."""
 
 
-class NLPT(Switch, OffloadMixin):
+class NLPT(Switch, OffloadMixin, ApplianceTypeMixin):
     """Legrand latching relay/teleruptor."""
 
 
@@ -108,7 +109,7 @@ class NLPS(FirmwareMixin, EnergyHistoryMixin, PowerMixin, Module):
     """Legrand / BTicino smart load shedder."""
 
 
-class NLC(Switch, OffloadMixin):
+class NLC(Switch, OffloadMixin, ApplianceTypeMixin):
     """Legrand / BTicino cable outlet."""
 
 
@@ -160,7 +161,7 @@ class NLTS(Module):
     """NLTS motion sensor."""
 
 
-class NLPD(Switch, OffloadMixin):
+class NLPD(Switch, OffloadMixin, ApplianceTypeMixin):
     """NLPD dry contact."""
 
 

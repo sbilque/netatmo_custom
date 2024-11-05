@@ -72,7 +72,8 @@ SUPPORT_FLAGS = (
     | ClimateEntityFeature.TURN_OFF
     | ClimateEntityFeature.TURN_ON
 )
-SUPPORT_PRESET = [PRESET_AWAY, PRESET_BOOST, PRESET_FROST_GUARD, PRESET_SCHEDULE]
+SUPPORT_PRESET = [PRESET_AWAY, PRESET_BOOST,
+                  PRESET_FROST_GUARD, PRESET_SCHEDULE]
 
 THERM_MODES = (PRESET_SCHEDULE, PRESET_FROST_GUARD, PRESET_AWAY)
 
@@ -129,7 +130,8 @@ async def async_setup_entry(
     @callback
     def _create_entity(netatmo_device: NetatmoRoom) -> None:
         if not netatmo_device.room.climate_type:
-            msg = f"No climate type found for this room: {netatmo_device.room.name}"
+            msg = f"No climate type found for this room: {
+                netatmo_device.room.name}"
             _LOGGER.debug(msg)
             return
         entity = NetatmoThermostat(netatmo_device)
@@ -374,7 +376,8 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
     async def async_set_temperature(self, **kwargs: Any) -> None:
         """Set new target temperature for 2 hours."""
         await self.device.async_therm_set(
-            STATE_NETATMO_MANUAL, min(kwargs[ATTR_TEMPERATURE], DEFAULT_MAX_TEMP)
+            STATE_NETATMO_MANUAL, min(
+                kwargs[ATTR_TEMPERATURE], DEFAULT_MAX_TEMP)
         )
         self.async_write_ha_state()
 
@@ -449,7 +452,8 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
                 break
 
         if not schedule_id:
-            _LOGGER.error("%s is not a valid schedule", kwargs.get(ATTR_SCHEDULE_NAME))
+            _LOGGER.error("%s is not a valid schedule",
+                          kwargs.get(ATTR_SCHEDULE_NAME))
             return
 
         await self.home.async_switch_schedule(schedule_id=schedule_id)

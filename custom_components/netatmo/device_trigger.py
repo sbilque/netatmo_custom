@@ -53,7 +53,8 @@ SUBTYPES = {
     ]
 }
 
-TRIGGER_TYPES = OUTDOOR_CAMERA_TRIGGERS + INDOOR_CAMERA_TRIGGERS + CLIMATE_TRIGGERS
+TRIGGER_TYPES = OUTDOOR_CAMERA_TRIGGERS + \
+    INDOOR_CAMERA_TRIGGERS + CLIMATE_TRIGGERS
 
 TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
     {
@@ -75,7 +76,8 @@ async def async_validate_trigger_config(
 
     if not device or device.model is None:
         raise InvalidDeviceAutomationConfig(
-            f"Trigger invalid, device with ID {config[CONF_DEVICE_ID]} not found"
+            f"Trigger invalid, device with ID {
+                config[CONF_DEVICE_ID]} not found"
         )
 
     trigger = config[CONF_TYPE]
@@ -85,7 +87,8 @@ async def async_validate_trigger_config(
         or device.model not in DEVICES
         or trigger not in DEVICES[device.model]
     ):
-        raise InvalidDeviceAutomationConfig(f"Unsupported model {device.model}")
+        raise InvalidDeviceAutomationConfig(
+            f"Unsupported model {device.model}")
 
     return config
 
@@ -158,7 +161,8 @@ async def async_attach_trigger(
 
     if config[CONF_TYPE] in SUBTYPES:
         event_config.update(
-            {event_trigger.CONF_EVENT_DATA: {"data": {"mode": config[CONF_SUBTYPE]}}}
+            {event_trigger.CONF_EVENT_DATA: {
+                "data": {"mode": config[CONF_SUBTYPE]}}}
         )
 
     event_config = event_trigger.TRIGGER_SCHEMA(event_config)

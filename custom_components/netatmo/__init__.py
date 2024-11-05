@@ -92,7 +92,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if not entry.unique_id:
         hass.config_entries.async_update_entry(entry, unique_id=DOMAIN)
 
-    session = config_entry_oauth2_flow.OAuth2Session(hass, entry, implementation)
+    session = config_entry_oauth2_flow.OAuth2Session(
+        hass, entry, implementation)
     try:
         await session.async_ensure_token_valid()
     except aiohttp.ClientResponseError as ex:
@@ -102,7 +103,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             HTTPStatus.UNAUTHORIZED,
             HTTPStatus.FORBIDDEN,
         ):
-            raise ConfigEntryAuthFailed("Token not valid, trigger renewal") from ex
+            raise ConfigEntryAuthFailed(
+                "Token not valid, trigger renewal") from ex
         raise ConfigEntryNotReady from ex
 
     required_scopes = api.get_api_scopes(entry.data["auth_implementation"])
@@ -128,7 +130,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     ) -> None:
         if CONF_WEBHOOK_ID not in entry.data:
             return
-        _LOGGER.debug("Unregister Netatmo webhook (%s)", entry.data[CONF_WEBHOOK_ID])
+        _LOGGER.debug("Unregister Netatmo webhook (%s)",
+                      entry.data[CONF_WEBHOOK_ID])
         async_dispatcher_send(
             hass,
             f"signal-{DOMAIN}-webhook-None",
@@ -152,7 +155,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if cloud.async_active_subscription(hass):
             webhook_url = await async_cloudhook_generate_url(hass, entry)
         else:
-            webhook_url = webhook_generate_url(hass, entry.data[CONF_WEBHOOK_ID])
+            webhook_url = webhook_generate_url(
+                hass, entry.data[CONF_WEBHOOK_ID])
 
         if entry.data[
             "auth_implementation"
@@ -178,7 +182,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             _LOGGER.error("Error during webhook registration - %s", err)
         else:
             entry.async_on_unload(
-                hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, unregister_webhook)
+                hass.bus.async_listen_once(
+                    EVENT_HOMEASSISTANT_STOP, unregister_webhook)
             )
 
     async def manage_cloudhook(state: cloud.CloudConnectionState) -> None:
@@ -199,9 +204,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.async_on_unload(async_at_started(hass, register_webhook))
 
     hass.services.async_register(DOMAIN, "register_webhook", register_webhook)
-    hass.services.async_register(DOMAIN, "unregister_webhook", unregister_webhook)
+    hass.services.async_register(
+        DOMAIN, "unregister_webhook", unregister_webhook)
 
-    entry.async_on_unload(entry.add_update_listener(async_config_entry_updated))
+    entry.async_on_unload(
+        entry.add_update_listener(async_config_entry_updated))
 
     return True
 
@@ -220,7 +227,8 @@ async def async_cloudhook_generate_url(hass: HomeAssistant, entry: ConfigEntry) 
 
 async def async_config_entry_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
     """Handle signals of config entry being updated."""
-    async_dispatcher_send(hass, f"signal-{DOMAIN}-public-update-{entry.entry_id}")
+    async_dispatcher_send(
+        hass, f"signal-{DOMAIN}-public-update-{entry.entry_id}")
 
     # check if the number of supported homes has changed
     local_data_handler = hass.data[DOMAIN][entry.entry_id][DATA_HANDLER]
@@ -232,14 +240,17 @@ async def async_config_entry_updated(hass: HomeAssistant, entry: ConfigEntry) ->
         enabled_homes = {
             home_id for home_id in account_home if home_id not in disabled_homes
         }
-        homes = local_data_handler.account.homes # it can have more homes, the public ones
+        # it can have more homes, the public ones
+        homes = local_data_handler.account.homes
         current_homes = {
             home_id for home_id in homes if home_id in account_home
         }
         if current_homes != enabled_homes:
-            _LOGGER.debug("Call reload to handle supported homes changes %s", homes)
+            _LOGGER.debug(
+                "Call reload to handle supported homes changes %s", homes)
             _reset_hass_domain(hass)
             await hass.config_entries.async_reload(entry.entry_id)
+
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""

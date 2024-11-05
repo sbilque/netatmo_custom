@@ -91,7 +91,8 @@ class NetatmoFlowHandler(
         """Create an oauth config entry or update existing entry for reauth."""
         existing_entry = await self.async_set_unique_id(DOMAIN)
         if existing_entry:
-            self.hass.config_entries.async_update_entry(existing_entry, data=data)
+            self.hass.config_entries.async_update_entry(
+                existing_entry, data=data)
             await self.hass.config_entries.async_reload(existing_entry.entry_id)
             return self.async_abort(reason="reauth_successful")
 
@@ -99,6 +100,8 @@ class NetatmoFlowHandler(
 
 
 INTERMEDIATE_ENABLED_HOMES = "enabled_homes"
+
+
 class NetatmoOptionsFlowHandler(OptionsFlow):
     """Handle Netatmo options."""
 
@@ -126,7 +129,6 @@ class NetatmoOptionsFlowHandler(OptionsFlow):
                 area: self.options[CONF_WEATHER_AREAS][area] for area in areas
             }
 
-
             enabled_homes = user_input.pop(INTERMEDIATE_ENABLED_HOMES, [])
 
             if enabled_homes:
@@ -138,7 +140,6 @@ class NetatmoOptionsFlowHandler(OptionsFlow):
                         disabled_homes.append(hid)
 
                 user_input[CONF_DISABLED_HOMES] = disabled_homes
-
 
             self.options.update(user_input)
             if new_client:

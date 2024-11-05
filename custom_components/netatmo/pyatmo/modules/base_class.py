@@ -87,7 +87,8 @@ class NetatmoBase(EntityBase, ABC):
         """Update attributes."""
 
         self.__dict__ = {
-            key: NETATMO_ATTRIBUTES_MAP.get(key, default(key, val))(raw_data, val)
+            key: NETATMO_ATTRIBUTES_MAP.get(
+                key, default(key, val))(raw_data, val)
             for key, val in self.__dict__.items()
         }
 

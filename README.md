@@ -2,7 +2,7 @@
 
 This repo is a custom component from the beta version of the official HA Netatmo component.
 
-Add this repo as a custom repo in HACS and install it. Remove the old Netatmo integration. Reboot Home Assistant and configure the newly installed netatmo component through the integration page as per the old one. 
+Add this repo as a custom repo in HACS and install it. Remove the old Netatmo integration. Reboot Home Assistant and configure the newly installed netatmo component through the integration page as per the old one.
 
 ## Installation
 
@@ -17,16 +17,16 @@ In order to use the custom component please follow the steps below:
 
 ### Multiple Homes coverage selection
 
-In your netatmo account you may have multiple homes, all where supported and imported in your homeassitant instance, and so all their devices and sensors. 
+In your netatmo account you may have multiple homes, all where supported and imported in your homeassitant instance, and so all their devices and sensors.
 You can now select the homes you want to support in your homeassistant instance (some complex houses may have multiple legrand gateways, hence the need to select multiple covered homes)
 
 Once this integration is properly installed
 1. Go to Settings > Devices & Services > Integrations Select the netatmo one (should have the HACS logo)
 2. Click Configure
 3. If you have multiple Homes, you should see a selector to select the homes to be covered
-4. Unfortunately you will have to manually delete the devices and entities not exposed anymore 
+4. Unfortunately you will have to manually delete the devices and entities not exposed anymore
     - Settings > Devices & Services > Devices
-    - click on each device from the "wrong" homes 
+    - click on each device from the "wrong" homes
     - In the device info, click teh three dots and delete, don't worry the integration won't let you delete a devices that is in use
 
 

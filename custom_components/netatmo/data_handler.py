@@ -114,10 +114,12 @@ CALL_PER_TEN_SECONDS = "CALL_PER_10S"
 SCAN_INTERVAL = "SCAN_INTERVAL"
 
 NETATMO_USER_CALL_LIMITS = {
-    CALL_PER_HOUR: 20,        # 20 to comply with the global limit of (20 * number of users) requests every hour
-    CALL_PER_TEN_SECONDS: 2,  # 2  to comply with the global limit of (2 * number of users) requests every 10 seconds
+    # 20 to comply with the global limit of (20 * number of users) requests every hour
+    CALL_PER_HOUR: 20,
+    # 2  to comply with the global limit of (2 * number of users) requests every 10 seconds
+    CALL_PER_TEN_SECONDS: 2,
     ACCOUNT: 10800,
-    HOME: 200, # 200s between calls it means 18 calls per hours
+    HOME: 200,  # 200s between calls it means 18 calls per hours
     WEATHER: 600,
     AIR_CARE: 300,
     PUBLIC: 600,
@@ -127,7 +129,8 @@ NETATMO_USER_CALL_LIMITS = {
 }
 NETATMO_DEV_CALL_LIMITS = {
     CALL_PER_HOUR: 450,        # in this case per user limit is: 500 requests every hour
-    CALL_PER_TEN_SECONDS: 45,  # in this case per user limit is: 50 requests every 10 seconds
+    # in this case per user limit is: 50 requests every 10 seconds
+    CALL_PER_TEN_SECONDS: 45,
     ACCOUNT: 3600,
     HOME: 5,
     WEATHER: 200,
@@ -211,7 +214,8 @@ class NetatmoPublisher:
         self.next_scan = ts + self.interval + wait_time
 
     def is_ts_allows_emission(self, ts):
-        return self.next_scan <= ts  # + max(self.data_handler._scan_interval, self.interval // 12)
+        # + max(self.data_handler._scan_interval, self.interval // 12)
+        return self.next_scan <= ts
 
 
 class NetatmoDataHandler:
@@ -236,7 +240,8 @@ class NetatmoDataHandler:
             _LOGGER.debug("NETATMO INTEGRATION : USE GLOBAL LIMITS")
         else:
             limits = NETATMO_DEV_CALL_LIMITS
-            _LOGGER.debug("NETATMO INTEGRATION : USE DEV LIMITS FOR YOUR OWN APP")
+            _LOGGER.debug(
+                "NETATMO INTEGRATION : USE DEV LIMITS FOR YOUR OWN APP")
 
         self._limits = limits
         self._scan_interval = limits[SCAN_INTERVAL]
@@ -244,7 +249,7 @@ class NetatmoDataHandler:
 
         self._10s_rate_limit = limits[CALL_PER_TEN_SECONDS]
 
-        self.rolling_hour = [] # used to store API calls and have a rolling windws of calls
+        self.rolling_hour = []  # used to store API calls and have a rolling windws of calls
         self._adjusted_hourly_rate_limit = None
         self._last_cph_change = None
 
@@ -268,20 +273,24 @@ class NetatmoDataHandler:
     async def _init_update_topology_if_needed(self):
 
         if self._init_topology_complete is False:
-            disabled_homes = self.config_entry.options.get(CONF_DISABLED_HOMES, [])
+            disabled_homes = self.config_entry.options.get(
+                CONF_DISABLED_HOMES, [])
             has_error = False
             try:
                 await self.account.async_update_topology(disabled_homes_ids=disabled_homes)
                 self.add_api_call(1)
 
             except (pyatmo.NoDevice, pyatmo.ApiError) as err:
-                _LOGGER.debug("init account.async_update_topology error NoDevice or ApiError %s", err)
+                _LOGGER.debug(
+                    "init account.async_update_topology error NoDevice or ApiError %s", err)
                 has_error = True
             except (TimeoutError, aiohttp.ClientConnectorError) as err:
-                _LOGGER.debug("init account.async_update_topology error Timeout or ClientConnectorError: %s",  err)
+                _LOGGER.debug(
+                    "init account.async_update_topology error Timeout or ClientConnectorError: %s",  err)
                 has_error = True
             except Exception as err:
-                _LOGGER.debug("init account.async_update_topology error unknown %s",  err)
+                _LOGGER.debug(
+                    "init account.async_update_topology error unknown %s",  err)
                 has_error = True
 
             if has_error is False:
@@ -292,7 +301,6 @@ class NetatmoDataHandler:
     async def _init_update_status_if_needed(self):
 
         if self._init_update_status_complete is False:
-
 
             num_house_ok = 0
             num_calls = 0
@@ -306,16 +314,20 @@ class NetatmoDataHandler:
                         await self.account.async_update_status(h)
                         num_calls += 1
                     except pyatmo.ApiHomeReachabilityError as err:
-                        _LOGGER.debug("init account.async_update_status error Not Reachable Home: %s", err)
+                        _LOGGER.debug(
+                            "init account.async_update_status error Not Reachable Home: %s", err)
                         has_error = True
                     except (pyatmo.NoDevice, pyatmo.ApiError) as err:
-                        _LOGGER.debug("init account.async_update_status error NoDevice or ApiError %s", err)
+                        _LOGGER.debug(
+                            "init account.async_update_status error NoDevice or ApiError %s", err)
                         has_error = True
                     except (TimeoutError, aiohttp.ClientConnectorError) as err:
-                        _LOGGER.debug("init account.async_update_status error Timeout or ClientConnectorError: %s", err)
+                        _LOGGER.debug(
+                            "init account.async_update_status error Timeout or ClientConnectorError: %s", err)
                         has_error = True
                     except Exception as err:
-                        _LOGGER.debug("init account.async_update_status error unknown %s", err)
+                        _LOGGER.debug(
+                            "init account.async_update_status error unknown %s", err)
                         has_error = True
 
                     if has_error is False:
@@ -327,7 +339,6 @@ class NetatmoDataHandler:
                 self._init_update_status_complete = True
 
         return self._init_update_status_complete
-
 
     async def _do_complete_init_if_needed(self):
         if self._init_complete is False:
@@ -349,7 +360,7 @@ class NetatmoDataHandler:
                     self.config_entry, PLATFORMS
                 )
 
-                #perform dispatch to create entities, modules, etc
+                # perform dispatch to create entities, modules, etc
                 await self.async_dispatch()
                 _LOGGER.info("Netatmo integration initialized")
                 self._init_complete = True
@@ -365,12 +376,14 @@ class NetatmoDataHandler:
         self.account = pyatmo.AsyncAccount(self._auth)
 
         if await self._do_complete_init_if_needed() is False:
-            _LOGGER.info("Netatmo integration not properly initialized at startup, trying again in %i seconds",self._scan_interval)
+            _LOGGER.info(
+                "Netatmo integration not properly initialized at startup, trying again in %i seconds", self._scan_interval)
 
         """Set up the Netatmo data handler. Do that at the end to have a good and proper init before calling it"""
         self.config_entry.async_on_unload(
             async_track_time_interval(
-                self.hass, self.async_update, timedelta(seconds=self._scan_interval)
+                self.hass, self.async_update, timedelta(
+                    seconds=self._scan_interval)
             )
         )
 
@@ -390,7 +403,8 @@ class NetatmoDataHandler:
         return num_cph
 
     def get_publisher_candidates(self, current, n):
-        self._sorted_publisher = sorted(self._sorted_publisher, key=lambda x: x.next_scan)
+        self._sorted_publisher = sorted(
+            self._sorted_publisher, key=lambda x: x.next_scan)
         # get the ones with the "older" not handled publisher
 
         candidates = []
@@ -412,8 +426,10 @@ class NetatmoDataHandler:
 
         scan_limit_per_hour = (hrl * self._scan_interval) // 3600
 
-        self._min_call_per_interval = int(min(scan_limit_per_hour, (self._scan_interval / 10.0) * self._10s_rate_limit))
-        self._max_call_per_interval = int(max(scan_limit_per_hour, (self._scan_interval / 10.0) * self._10s_rate_limit))
+        self._min_call_per_interval = int(
+            min(scan_limit_per_hour, (self._scan_interval / 10.0) * self._10s_rate_limit))
+        self._max_call_per_interval = int(
+            max(scan_limit_per_hour, (self._scan_interval / 10.0) * self._10s_rate_limit))
 
     def adjust_intervals_to_target(self,
                                    target=None,
@@ -438,7 +454,8 @@ class NetatmoDataHandler:
 
         if do_wait_scan_for_cph_to_target:
             # wait for a bit longer to reach 80% of the target cph to have 20% of room to breath
-            wait_time = self.get_wait_time_to_reach_targets(current, int(target * 0.80))
+            wait_time = self.get_wait_time_to_reach_targets(
+                current, int(target * 0.80))
         else:
             wait_time = 0
 
@@ -449,7 +466,8 @@ class NetatmoDataHandler:
         if force_adjust is True or ctph >= target:
             msg = ("Adapting intervals to comply with the requested rate limit "
                    "from theoretical %f to %i (initial: %i) waiting for : %i s")
-            _LOGGER.info(msg, ctph, target, self._initial_hourly_rate_limit, wait_time)
+            _LOGGER.info(msg, ctph, target,
+                         self._initial_hourly_rate_limit, wait_time)
 
             for p in self._sorted_publisher:
                 p.interval = int((p.interval * ctph) / target) + 1
@@ -478,7 +496,8 @@ class NetatmoDataHandler:
         """Update device."""
 
         if await self._do_complete_init_if_needed() is False:
-            _LOGGER.info("Netatmo integration not yet initialized, trying again in %i seconds", self._scan_interval)
+            _LOGGER.info(
+                "Netatmo integration not yet initialized, trying again in %i seconds", self._scan_interval)
 
         # no need all the time but fairly quick
         self.adjust_intervals_to_target()
@@ -488,7 +507,8 @@ class NetatmoDataHandler:
 
         cph_init = self.get_current_calls_count_per_hour()
 
-        num_call = max(0, min(self._max_call_per_interval, self._adjusted_hourly_rate_limit - cph_init))
+        num_call = max(0, min(self._max_call_per_interval,
+                       self._adjusted_hourly_rate_limit - cph_init))
 
         if num_call > 0:
             delta_sleep = self._scan_interval / (3.0 * num_call)
@@ -499,7 +519,8 @@ class NetatmoDataHandler:
 
         current = int(time())
 
-        candidates, num_predicted_calls = self.get_publisher_candidates(current, num_call)
+        candidates, num_predicted_calls = self.get_publisher_candidates(
+            current, num_call)
 
         if len(candidates) <= 1:
             delta_sleep = 0
@@ -518,7 +539,8 @@ class NetatmoDataHandler:
                     _LOGGER.debug("Error on publisher: %s, num_errors: %i",
                                   publisher, data_class.num_consecutive_errors)
                     # Try again a bit later, this is not a rate limit
-                    data_class.next_scan = current + self._scan_interval  # *(data_class.num_consecutive_errors + 1)
+                    # *(data_class.num_consecutive_errors + 1)
+                    data_class.next_scan = current + self._scan_interval
                 else:
                     self.publisher[publisher].push_emission(current)
                     self.publisher[publisher].set_next_scan(current)
@@ -529,7 +551,8 @@ class NetatmoDataHandler:
         cph = self.get_current_calls_count_per_hour()
         current = int(time())
         msg = "Calls per hour: %i , num call asked: %i num candidates: %i num call predicted : %i  num pub: %i"
-        _LOGGER.debug(msg, cph, num_call, len(candidates), num_predicted_calls, len(self._sorted_publisher))
+        _LOGGER.debug(msg, cph, num_call, len(candidates),
+                      num_predicted_calls, len(self._sorted_publisher))
 
         if self._last_cph_change is None or current - self._last_cph_change > 3600:
 
@@ -538,7 +561,8 @@ class NetatmoDataHandler:
                 _LOGGER.info("Calls per hour hit rate limit: %i/%i throttled API: %s",
                              cph, self._adjusted_hourly_rate_limit, has_been_throttled)
                 # remove 20% each time ...
-                new_target = int(self._adjusted_hourly_rate_limit * CPH_ADJUSTEMENT_DOWN)
+                new_target = int(
+                    self._adjusted_hourly_rate_limit * CPH_ADJUSTEMENT_DOWN)
                 self.adjust_intervals_to_target(new_target,
                                                 force_adjust=False,
                                                 redo_next_scan=True,
@@ -552,7 +576,8 @@ class NetatmoDataHandler:
                                   new_target, self._initial_hourly_rate_limit)
                     # every "good"  hour window, let get the rate limit up (with a limit) going up only by half
                     # what we went down in case of issue (so here 10% up)
-                    self.adjust_intervals_to_target(new_target, force_adjust=True, redo_next_scan=False)
+                    self.adjust_intervals_to_target(
+                        new_target, force_adjust=True, redo_next_scan=False)
                     self._last_cph_change = current
 
     @callback
@@ -598,7 +623,8 @@ class NetatmoDataHandler:
                 _LOGGER.debug("fetch error ApiError: %s", err)
                 has_error = True
             except (TimeoutError, aiohttp.ClientConnectorError) as err:
-                _LOGGER.debug("fetch error Timeout or ClientConnectorError: %s", err)
+                _LOGGER.debug(
+                    "fetch error Timeout or ClientConnectorError: %s", err)
                 return True, False
             except Exception as err:
                 _LOGGER.debug("fetch error unknown %s", err)
@@ -645,9 +671,11 @@ class NetatmoDataHandler:
             target = self.account
 
         if publisher == PUBLIC:
-            kwargs = {"area_id": self.account.register_public_weather_area(**kwargs)}
+            kwargs = {
+                "area_id": self.account.register_public_weather_area(**kwargs)}
         elif publisher == ACCOUNT:
-            kwargs = {"disabled_homes_ids": self.config_entry.options.get(CONF_DISABLED_HOMES, [])}
+            kwargs = {"disabled_homes_ids": self.config_entry.options.get(
+                CONF_DISABLED_HOMES, [])}
 
         interval = int(self._limits[publisher])
         self.publisher[signal_name] = NetatmoPublisher(
@@ -666,7 +694,8 @@ class NetatmoDataHandler:
         except KeyError:
             # in case we have a bad formed response from the API
             self.publisher.pop(signal_name)
-            _LOGGER.debug("Publisher %s removed at subscription due to mal formed response!!!!!!", signal_name)
+            _LOGGER.debug(
+                "Publisher %s removed at subscription due to mal formed response!!!!!!", signal_name)
             raise
 
         self._sorted_publisher.append(self.publisher[signal_name])
@@ -688,11 +717,11 @@ class NetatmoDataHandler:
         for interval, publishers in intervals.items():
             if len(publishers) > 1:
                 for i, p in enumerate(publishers):
-                    p.next_scan = current + max(wait_time, 1) + int(i * interval // len(publishers))
+                    p.next_scan = current + \
+                        max(wait_time, 1) + int(i * interval // len(publishers))
             else:
-                publishers[0].next_scan = current + max(wait_time, 1) + interval//2
-
-
+                publishers[0].next_scan = current + \
+                    max(wait_time, 1) + interval//2
 
     async def unsubscribe(
         self, signal_name: str, update_callback: CALLBACK_TYPE | None
@@ -704,7 +733,8 @@ class NetatmoDataHandler:
         self.publisher[signal_name].subscriptions.remove(update_callback)
 
         if not self.publisher[signal_name].subscriptions:
-            self._sorted_publisher = [p for p in self._sorted_publisher if p.name != signal_name]
+            self._sorted_publisher = [
+                p for p in self._sorted_publisher if p.name != signal_name]
             self.publisher.pop(signal_name)
             _LOGGER.debug("Publisher %s removed", signal_name)
 
@@ -776,34 +806,35 @@ class NetatmoDataHandler:
 
             signals = netatmo_type_signal_map.get(module.device_category, [])
 
-
             # unfortunately the ecoounter is handled in a very peculiar way
             # it is its own bridge, and sensor are hardcoded by name
             if (module.device_category == NetatmoDeviceCategory.meter and
                     module.device_type == NetatmoDeviceType.NLE):
-                    if module.modules or module.bridge is None:
-                        # if we have an ecocounter as bridge, do not add its sensors as it is only its owned modules
-                        # that are sporting the real sensors wiht power and energy .... except that power is not
-                        # available in the case of this kind of ecocounter
+                if module.modules or module.bridge is None:
+                    # if we have an ecocounter as bridge, do not add its sensors as it is only its owned modules
+                    # that are sporting the real sensors wiht power and energy .... except that power is not
+                    # available in the case of this kind of ecocounter
+                    continue
+                elif module.bridge:
+                    # sensor are encoded by name unfortunately here :(
+
+                    name = module.entity_id
+                    sp = name.split("#")
+                    if len(sp) != 2:
                         continue
-                    elif module.bridge:
-                        # sensor are encoded by name unfortunately here :(
+                    num = sp[1]
+                    try:
+                        num = int(num)
+                    except:
+                        continue
 
-                        name = module.entity_id
-                        sp = name.split("#")
-                        if len(sp) != 2:
-                            continue
-                        num = sp[1]
-                        try:
-                            num = int(num)
-                        except:
-                            continue
-
-                        if num > 5:
-                            if num == 6:
-                                signals = [NETATMO_CREATE_SENSOR, NETATMO_CREATE_GAS]
-                            else:
-                                signals = [NETATMO_CREATE_SENSOR, NETATMO_CREATE_WATER]
+                    if num > 5:
+                        if num == 6:
+                            signals = [NETATMO_CREATE_SENSOR,
+                                       NETATMO_CREATE_GAS]
+                        else:
+                            signals = [NETATMO_CREATE_SENSOR,
+                                       NETATMO_CREATE_WATER]
 
             for signal in signals:
                 async_dispatcher_send(

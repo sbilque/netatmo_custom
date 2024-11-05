@@ -2,7 +2,9 @@
   "name": "Netatmo Custom Component",
   "image": "mcr.microsoft.com/vscode/devcontainers/python:3.12-bullseye",
   "postCreateCommand": "scripts/setup",
-  "appPort": ["9123:8123"],
+  "appPort": [
+    "9123:8123"
+  ],
   "customizations": {
     "vscode": {
       "extensions": [

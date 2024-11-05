@@ -46,6 +46,7 @@ ATTRIBUTE_FILTER = {
     "features",
     "history_features",
     "history_features_values",
+    "appliance_type",
 }
 
 
@@ -302,7 +303,7 @@ class ApplianceTypeMixin(EntityBase):
         """Initialize appliance type mixin."""
 
         super().__init__(home, module)  # type: ignore # mypy issue 4335
-        self.appliance_type: str | None = None
+        self.appliance_type: str | None = module.get("appliance_type", None)
 
 
 class PowerMixin(EntityBase):
@@ -504,7 +505,8 @@ class CameraMixin(EntityBase):
                         temp_local_url,
                     )
                 except (TimeoutError, ClientConnectorError) as exc:
-                    LOG.debug("Cannot connect to %s - reason: %s", temp_local_url, exc)
+                    LOG.debug("Cannot connect to %s - reason: %s",
+                              temp_local_url, exc)
                     self.is_local = False
                     self.local_url = None
 
@@ -651,8 +653,10 @@ MEASURE_INTERVAL_TO_SECONDS = {
     MeasureInterval.MONTH: 2592000,
 }
 
-ENERGY_FILTERS = f"{MeasureType.SUM_ENERGY_ELEC.value},{MeasureType.SUM_ENERGY_ELEC_BASIC.value},{MeasureType.SUM_ENERGY_ELEC_PEAK.value},{MeasureType.SUM_ENERGY_ELEC_OFF_PEAK.value}"
-ENERGY_FILTERS_LEGACY = f"{MeasureType.SUM_ENERGY_ELEC_LEGACY.value},{MeasureType.SUM_ENERGY_ELEC_BASIC_LEGACY.value},{MeasureType.SUM_ENERGY_ELEC_PEAK_LEGACY.value},{MeasureType.SUM_ENERGY_ELEC_OFF_PEAK_LEGACY.value}"
+ENERGY_FILTERS = f"{MeasureType.SUM_ENERGY_ELEC.value},{MeasureType.SUM_ENERGY_ELEC_BASIC.value},{
+    MeasureType.SUM_ENERGY_ELEC_PEAK.value},{MeasureType.SUM_ENERGY_ELEC_OFF_PEAK.value}"
+ENERGY_FILTERS_LEGACY = f"{MeasureType.SUM_ENERGY_ELEC_LEGACY.value},{MeasureType.SUM_ENERGY_ELEC_BASIC_LEGACY.value},{
+    MeasureType.SUM_ENERGY_ELEC_PEAK_LEGACY.value},{MeasureType.SUM_ENERGY_ELEC_OFF_PEAK_LEGACY.value}"
 ENERGY_FILTERS_MODES = ["generic", "basic", "peak", "off_peak"]
 
 
@@ -716,7 +720,8 @@ class EnergyHistoryMixin(EntityBase):
         if start_power_time is None:
             self._anchor_for_power_adjustment = start_power_time
         else:
-            self._anchor_for_power_adjustment = int(start_power_time.timestamp())
+            self._anchor_for_power_adjustment = int(
+                start_power_time.timestamp())
 
     def get_sum_energy_elec_power_adapted(
         self,
@@ -752,7 +757,8 @@ class EnergyHistoryMixin(EntityBase):
                     self,
                     EnergyHistoryMixin,
                 ):  # well to please the linter....
-                    delta_energy = compute_riemann_sum(power_data, conservative)
+                    delta_energy = compute_riemann_sum(
+                        power_data, conservative)
 
         return v, delta_energy
 
@@ -885,9 +891,11 @@ class EnergyHistoryMixin(EntityBase):
 
             computed_end_for_calculus = c_end
 
-            start_time_string = f"{datetime.fromtimestamp(c_start + 1, tz=UTC).isoformat().split('+')[0]}Z"
+            start_time_string = f"{datetime.fromtimestamp(
+                c_start + 1, tz=UTC).isoformat().split('+')[0]}Z"
             end_time_string = (
-                f"{datetime.fromtimestamp(c_end, tz=UTC).isoformat().split('+')[0]}Z"
+                f"{datetime.fromtimestamp(
+                    c_end, tz=UTC).isoformat().split('+')[0]}Z"
             )
             self.historical_data.append(
                 {
@@ -961,7 +969,8 @@ class EnergyHistoryMixin(EntityBase):
                     body=values_lots,
                 )
                 msg = (
-                    f"Energy badly formed resp beg_time missing: {values_lots} - "
+                    f"Energy badly formed resp beg_time missing: {
+                        values_lots} - "
                     f"module: {self.name}"
                 )
                 raise ApiError(
@@ -1090,7 +1099,8 @@ class Module(NetatmoBase):
             and hasattr(self, "device_category")
             and self.device_category == "weather"
         ):
-            self.name = update_name(self.name, self.home.modules[self.bridge].name)
+            self.name = update_name(
+                self.name, self.home.modules[self.bridge].name)
 
         self.update_features()
 
@@ -1114,7 +1124,8 @@ class Module(NetatmoBase):
     def update_features(self) -> None:
         """Update features."""
 
-        self.features.update({var for var in vars(self) if var not in ATTRIBUTE_FILTER})
+        self.features.update({var for var in vars(
+            self) if var not in ATTRIBUTE_FILTER})
         if "battery_state" in vars(self) or "battery_percent" in vars(self):
             self.features.add("battery")
         if "wind_angle" in self.features:

@@ -28,6 +28,7 @@ from .modules.netatmo import NACamera
 from .person import Person
 from .room import Room
 from .schedule import Schedule, ScheduleType
+from .modules.device_types import DeviceType
 
 if TYPE_CHECKING:
     from aiohttp import ClientResponse
@@ -88,7 +89,8 @@ class Home:
         }
         self.events = {}
 
-        self.temperature_control_mode = raw_data.get("temperature_control_mode")
+        self.temperature_control_mode = raw_data.get(
+            "temperature_control_mode")
         self.therm_mode = raw_data.get("therm_mode")
         self.therm_setpoint_default_duration = raw_data.get(
             "therm_setpoint_default_duration",
@@ -117,7 +119,8 @@ class Home:
 
         raw_modules = raw_data.get("modules", [])
 
-        self.temperature_control_mode = raw_data.get("temperature_control_mode")
+        self.temperature_control_mode = raw_data.get(
+            "temperature_control_mode")
         self.therm_mode = raw_data.get("therm_mode")
         self.therm_setpoint_default_duration = raw_data.get(
             "therm_setpoint_default_duration",
@@ -254,6 +257,11 @@ class Home:
 
         return any("BNS" in room.device_types for room in self.rooms.values())
 
+    def has_nlc(self) -> bool:
+        """Check if any room has a radiator device."""
+
+        return any(room.climate_type == DeviceType.NLC for room in self.rooms.values())
+
     def get_hg_temp(self) -> float | None:
         """Return frost guard temperature value for given home."""
 
@@ -305,7 +313,8 @@ class Home:
         if not self.is_valid_schedule(schedule_id):
             msg = f"{schedule_id} is not a valid schedule id"
             raise NoSchedule(msg)
-        LOG.debug("Setting home (%s) schedule to %s", self.entity_id, schedule_id)
+        LOG.debug("Setting home (%s) schedule to %s",
+                  self.entity_id, schedule_id)
         resp = await self.auth.async_post_api_request(
             endpoint=SWITCHHOMESCHEDULE_ENDPOINT,
             params={"home_id": self.entity_id, "schedule_id": schedule_id},
@@ -318,7 +327,8 @@ class Home:
         if not is_valid_state(data):
             msg = "Data for '/set_state' contains errors."
             raise InvalidState(msg)
-        LOG.debug("Setting state for home (%s) according to %s", self.entity_id, data)
+        LOG.debug("Setting state for home (%s) according to %s",
+                  self.entity_id, data)
         resp = await self.auth.async_post_api_request(
             endpoint=SETSTATE_ENDPOINT,
             params={"json": {"home": {"id": self.entity_id, **data}}},

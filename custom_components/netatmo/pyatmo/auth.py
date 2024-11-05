@@ -149,7 +149,8 @@ class AbstractAsyncAuth(ABC):
         resp_content = await resp.read()
 
         if not resp.ok:
-            LOG.debug("The Netatmo API returned %s (%s)", resp_content, resp_status)
+            LOG.debug("The Netatmo API returned %s (%s)",
+                      resp_content, resp_status)
             await self.handle_error_response(resp, resp_status, url)
 
         return await self.handle_success_response(resp, resp_content)

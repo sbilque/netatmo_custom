@@ -76,13 +76,15 @@ class NetatmoSource(MediaSource):
             created = dt.datetime.fromtimestamp(
                 self.events[camera_id][event_id]["event_time"]
             )
-            thumbnail = self.events[camera_id][event_id].get("snapshot", {}).get("url")
+            thumbnail = self.events[camera_id][event_id].get(
+                "snapshot", {}).get("url")
             message = remove_html_tags(
                 self.events[camera_id][event_id].get("message", "")
             )
             title = f"{created} - {message}"
         else:
-            title = self.hass.data[DOMAIN][DATA_CAMERAS].get(camera_id, MANUFACTURER)
+            title = self.hass.data[DOMAIN][DATA_CAMERAS].get(
+                camera_id, MANUFACTURER)
             thumbnail = None
 
         if event_id:

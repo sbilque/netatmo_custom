@@ -51,7 +51,8 @@ class AsyncAccount:
         """Return the representation."""
 
         return (
-            f"{self.__class__.__name__}(user={self.user}, home_ids={self.homes.keys()}"
+            f"{self.__class__.__name__}(user={self.user}, home_ids={
+                self.homes.keys()}"
         )
 
     def process_topology(self, disabled_homes_ids: list[str] | None = None) -> None:
@@ -110,7 +111,8 @@ class AsyncAccount:
 
     async def async_update_weather_stations(self) -> None:
         """Retrieve status data from /getstationsdata."""
-        params = {"get_favorites": ("true" if self.favorite_stations else "false")}
+        params = {"get_favorites": (
+            "true" if self.favorite_stations else "false")}
         await self._async_update_data(
             GETSTATIONDATA_ENDPOINT,
             params=params,
@@ -229,8 +231,10 @@ class AsyncAccount:
                         module_data["home_id"] = home_id
                         module_data["id"] = module_data["_id"]
                         module_data["name"] = module_data.get("module_name")
-                        modules_data.append(normalize_weather_attributes(module_data))
-                    modules_data.append(normalize_weather_attributes(device_data))
+                        modules_data.append(
+                            normalize_weather_attributes(module_data))
+                    modules_data.append(
+                        normalize_weather_attributes(device_data))
 
                     self.homes[home_id] = Home(
                         self.auth,
@@ -241,7 +245,8 @@ class AsyncAccount:
                         },
                     )
                 await self.homes[home_id].update(
-                    {HOME: {"modules": [normalize_weather_attributes(device_data)]}},
+                    {HOME: {"modules": [
+                        normalize_weather_attributes(device_data)]}},
                 )
             else:
                 LOG.debug("No home %s (%s) found.", home_id, home_id)

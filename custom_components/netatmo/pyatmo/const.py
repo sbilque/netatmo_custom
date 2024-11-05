@@ -91,6 +91,7 @@ FROSTGUARD = "hg"
 SCHEDULE = "schedule"
 OFF = "off"
 AWAY = "away"
+COMFORT = "comfort"
 
 HEATING = "heating"
 COOLING = "cooling"

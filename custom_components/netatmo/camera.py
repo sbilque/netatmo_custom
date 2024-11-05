@@ -104,7 +104,8 @@ class NetatmoCamera(NetatmoModuleEntity, Camera):
         Camera.__init__(self)
         super().__init__(netatmo_device)
 
-        self._attr_unique_id = f"{netatmo_device.device.entity_id}-{self.device_type}"
+        self._attr_unique_id = f"{
+            netatmo_device.device.entity_id}-{self.device_type}"
         self._light_state = None
 
         self._publishers.extend(
@@ -274,7 +275,8 @@ class NetatmoCamera(NetatmoModuleEntity, Camera):
                 person_id_errors.append(person)
 
         if person_id_errors:
-            raise HomeAssistantError(f"Person(s) not registered {person_id_errors}")
+            raise HomeAssistantError(
+                f"Person(s) not registered {person_id_errors}")
 
         return person_ids
 
@@ -305,7 +307,8 @@ class NetatmoCamera(NetatmoModuleEntity, Camera):
         """Service to set light mode."""
         if not isinstance(self.device, NaModules.netatmo.NOC):
             raise HomeAssistantError(
-                f"{self.device_type} <{self.device.name}> does not have a floodlight"
+                f"{self.device_type} <{
+                    self.device.name}> does not have a floodlight"
             )
 
         mode = str(kwargs.get(ATTR_CAMERA_LIGHT_MODE))

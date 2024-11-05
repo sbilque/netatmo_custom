@@ -8,11 +8,14 @@
       "request": "launch",
       "module": "homeassistant",
       "justMyCode": false,
-      "args": ["--debug", "-c", "config"],
+      "args": [
+        "--debug",
+        "-c",
+        "config"
+      ],
       "preLaunchTask": "Prepare for run"
     },
     {
-
       // Example of attaching to local debug server
       "name": "Python: Attach Local",
       "type": "python",

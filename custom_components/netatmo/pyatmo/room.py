@@ -20,6 +20,7 @@ from .const import (
 )
 from .modules.base_class import NetatmoBase
 from .modules.device_types import DeviceType
+from .modules.device_types import ApplianceType
 from .modules.module import Boiler
 
 if TYPE_CHECKING:
@@ -100,7 +101,7 @@ class Room(NetatmoBase):
             self.device_types.add(module.device_type)
             if module.device_category is not None:
                 self.features.add(module.device_category.name)
-            if module.device_type == "NLC" and module.appliance_type in ("radiator", "radiator_without_wire"):
+            if module.device_type == "NLC" and module.appliance_type == ApplianceType.radiator:
                 has_radiator = True
 
         if "OTM" in self.device_types:

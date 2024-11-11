@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 
 from ..const import MAX_HISTORY_TIME_FRAME, RawData
 from ..modules.device_types import DeviceType
+from ..modules.device_types import ApplianceType
 
 if TYPE_CHECKING:
     from collections.abc import Iterator
@@ -34,6 +35,7 @@ NETATMO_ATTRIBUTES_MAP = {
     "battery_level": lambda x, _: x.get("battery_vp", x.get("battery_level")),
     "place": lambda x, _: Place(x.get("place")),
     "target_position__step": lambda x, _: x.get("target_position:step"),
+    "appliance_type": lambda x, y: ApplianceType(x.get("appliance_type", y)),
 }
 
 

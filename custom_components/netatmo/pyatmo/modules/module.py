@@ -13,6 +13,7 @@ from ..const import GETMEASURE_ENDPOINT, RawData
 from ..exceptions import ApiError
 from ..modules.base_class import EntityBase, NetatmoBase, Place, update_name
 from ..modules.device_types import DEVICE_CATEGORY_MAP, DeviceCategory, DeviceType
+from ..modules.device_types import ApplianceType
 
 if TYPE_CHECKING:
     from ..event import Event
@@ -303,7 +304,27 @@ class ApplianceTypeMixin(EntityBase):
         """Initialize appliance type mixin."""
 
         super().__init__(home, module)  # type: ignore # mypy issue 4335
-        self.appliance_type: str | None = module.get("appliance_type", None)
+        self.appliance_type: ApplianceType | None = module.get(
+            "appliance_type", ApplianceType.unknown)
+        if (
+            self.device_type == DeviceType.NLC
+            and self.appliance_type == ApplianceType.radiator
+        ):
+            self.device_category = DeviceCategory.climate
+
+    async def update(self, raw_data: RawData) -> None:
+        """Update Appliance Type with the latest data."""
+
+        await Module.update(self, raw_data)
+        if (
+            self.device_type == DeviceType.NLC
+            and hasattr(self, "appliance_type")
+            and self.appliance_type == ApplianceType.radiator
+            and self.device_category != DeviceCategory.climate
+        ):
+            self.device_category = DeviceCategory.climate
+        else:
+            self.device_category = DEVICE_CATEGORY_MAP.get(self.device_type)
 
 
 class PowerMixin(EntityBase):
@@ -1132,7 +1153,6 @@ class Module(NetatmoBase):
             self.features.add("wind_direction")
             self.features.add("gust_direction")
 
-
 # pylint: disable=too-many-ancestors
 
 
@@ -1153,7 +1173,7 @@ class Camera(
         await self.async_update_camera_urls()
 
 
-class Switch(FirmwareMixin, EnergyHistoryMixin, PowerMixin, SwitchMixin, Module):
+class Switch(FirmwareMixin, EnergyHistoryMixin, PowerMixin, SwitchMixin, ApplianceTypeMixin, Module):
     """Class to represent a Netatmo switch."""
 
 

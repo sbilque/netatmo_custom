@@ -1,5 +1,6 @@
 colorlog==6.7.0
-homeassistant==2024.5.4
+homeassistant==2025.1.2
 pip
 ruff==0.0.292
 aiohttp
+pre-commit

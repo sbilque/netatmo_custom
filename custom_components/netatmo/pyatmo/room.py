@@ -62,6 +62,8 @@ class Room(NetatmoBase):
     cooling_setpoint_end_time: int | None = None
     cooling_setpoint_mode: str | None = None
 
+    radiator_power: int | None = None
+
     def __init__(
         self,
         home: Home,
@@ -152,6 +154,11 @@ class Room(NetatmoBase):
         self.cooling_setpoint_end_time = raw_data.get(
             "cooling_setpoint_end_time")
         self.cooling_setpoint_mode = raw_data.get("cooling_setpoint_mode")
+
+        for module in self.modules.values():
+            self.radiator_power = 0
+            if module.device_type == "NLC" and module.appliance_type == ApplianceType.radiator:
+                self.radiator_power += module.power
 
     async def async_therm_manual(
         self,

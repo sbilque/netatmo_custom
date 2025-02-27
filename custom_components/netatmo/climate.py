@@ -137,10 +137,9 @@ PRESET_MAP_NETATMO_NLC = {
 }
 
 HVAC_MAP_NETATMO_NLC = {
-    PRESET_COMFORT: HVACMode.AUTO,
-    PRESET_AWAY: HVACMode.AUTO,
-    PRESET_FROST_GUARD: HVACMode.AUTO,
-    PRESET_OFF: HVACMode.OFF,
+    STATE_NETATMO_HG: HVACMode.HEAT,
+    STATE_NETATMO_HOME: HVACMode.AUTO,
+    STATE_NETATMO_MANUAL: HVACMode.HEAT,
 }
 
 HVAC_MAP_NETATMO = {
@@ -243,6 +242,8 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
     _away_temperature: float | None = None
     _hg_temperature: float | None = None
     _boilerstatus: bool | None = None
+    _previous_preset_mode: str | None = None
+    _previous_hvac_mode: HVACMode | None = None
 
     def __init__(self, room: NetatmoRoom) -> None:
         """Initialize the sensor."""
@@ -267,7 +268,8 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
         elif self.device_type is NA_NLC:
             self._connected = True  # NLC is always connected
             self._attr_hvac_mode = HVACMode.AUTO
-            self._attr_hvac_modes = [HVACMode.AUTO, HVACMode.OFF]
+            self._attr_hvac_modes = [
+                HVACMode.HEAT, HVACMode.AUTO, HVACMode.OFF]
             self._attr_preset_modes = SUPPORT_PRESET_NLC
             self._attr_supported_features = SUPPORT_FLAGS_NLC
             self._attr_target_temperature_step = None
@@ -347,9 +349,21 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
                     self._attr_hvac_mode = HVACMode.HEAT
                     self._attr_preset_mode = PRESET_MAP_NETATMO[PRESET_BOOST]
                     self._attr_target_temperature = DEFAULT_MAX_TEMP
+                elif (
+                    room["therm_setpoint_mode"] == STATE_NETATMO_HG
+                    and self.device_type == NA_NLC
+                ):
+                    self._attr_hvac_mode = HVACMode.HEAT
+                    self._attr_preset_mode = PRESET_FROST_GUARD
+                elif (
+                    room["therm_setpoint_mode"] == STATE_NETATMO_HOME
+                    and self.device_type == NA_NLC
+                ):
+                    self._attr_hvac_mode = HVACMode.AUTO
+                    self._attr_preset_mode = NETATMO_MAP_PRESET_NLC[room["therm_setpoint_fp"]]
                 elif room["therm_setpoint_mode"] == STATE_NETATMO_MANUAL:
                     if self.device_type == NA_NLC:
-                        self._attr_hvac_mode = HVACMode.AUTO
+                        self._attr_hvac_mode = HVACMode.HEAT
                         self._attr_preset_mode = NETATMO_MAP_PRESET_NLC[room["therm_setpoint_fp"]]
                         if self._attr_preset_mode == PRESET_OFF:
                             self._attr_hvac_mode = HVACMode.OFF
@@ -378,13 +392,15 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
     @property
     def hvac_action(self) -> HVACAction:
         """Return the current running hvac operation if supported."""
-        if self.device_type == NA_NLC:
-            return HVACAction.HEATING
         if self.device_type != NA_VALVE and self._boilerstatus is not None:
             return CURRENT_HVAC_MAP_NETATMO[self._boilerstatus]
         # Maybe it is a valve
+        if self.device_type == NA_NLC:
+            attribute = "radiator_power"
+        else:
+            attribute = "heating_power_request"
         if (
-            heating_req := getattr(self.device, "heating_power_request", 0)
+            heating_req := getattr(self.device, attribute, 0)
         ) is not None and heating_req > 0:
             return HVACAction.HEATING
         return HVACAction.IDLE
@@ -392,13 +408,16 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
     async def async_set_hvac_mode(self, hvac_mode: HVACMode) -> None:
         """Set new target hvac mode."""
         if self.device_type == NA_NLC:
-            fp_mode = None
             if hvac_mode == HVACMode.AUTO:
-                fp_mode = STATE_NETATMO_NLC_COMFORT
-            elif hvac_mode == HVACMode.OFF:
-                fp_mode = STATE_NETATMO_NLC_STAND_BY
-            await self._async_set_fp_value(fp_mode)
-            return
+                await self.device.async_therm_set(
+                    STATE_NETATMO_HOME,
+                )
+                return
+            elif hvac_mode == HVACMode.HEAT:
+                fp_mode = PRESET_MAP_NETATMO_NLC.get(
+                    self._previous_preset_mode, STATE_NETATMO_NLC_AWAY)
+                await self._async_set_fp_value(fp_mode)
+                return
         if hvac_mode == HVACMode.OFF:
             await self.async_turn_off()
         elif hvac_mode == HVACMode.AUTO:
@@ -407,7 +426,7 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
             await self.async_set_preset_mode(PRESET_BOOST)
 
     async def _async_set_fp_value(self, fp_mode: str, end_timestamp: int = 2147483647) -> None:
-        # = 214748364 = until a new order
+        # = 214748364 = until a new order, Unix timestamp = Tue Jan 19 03:14:07 2038
 
         _LOGGER.debug(
             "Setting %s fp mode to %s for %s",
@@ -426,7 +445,19 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
 
     async def async_set_preset_mode(self, preset_mode: str) -> None:
         """Set new preset mode."""
-        if self.device_type == NA_NLC:
+        if (
+            preset_mode in (STATE_NETATMO_NLC_FROST_GUARD,
+                            STATE_NETATMO_NLC_COMFORT, STATE_NETATMO_NLC_AWAY)
+            and self.device_type == NA_NLC
+            # and (self._attr_hvac_mode == HVACMode.HEAT or self._attr_hvac_mode == HVACMode.AUTO)
+        ):
+            await self._async_set_fp_value(fp_mode=PRESET_MAP_NETATMO_NLC[preset_mode])
+        elif (
+            preset_mode == STATE_NETATMO_NLC_STAND_BY
+            and self.device_type == NA_NLC
+            # and (self._attr_hvac_mode == HVACMode.HEAT or self._attr_hvac_mode == HVACMode.AUTO)
+        ):
+            self._previous_preset_mode = self._attr_preset_mode
             await self._async_set_fp_value(fp_mode=PRESET_MAP_NETATMO_NLC[preset_mode])
         elif (
             preset_mode in (PRESET_BOOST, STATE_NETATMO_MAX)
@@ -468,7 +499,12 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
 
     async def async_turn_off(self) -> None:
         """Turn the entity off."""
-        if self.device_type == NA_NLC:
+        if (
+            self.device_type == NA_NLC
+            and self._attr_hvac_mode != HVACMode.OFF
+        ):
+            self._previous_preset_mode = self._attr_preset_mode
+            self._previous_hvac_mode = self._attr_hvac_mode
             await self._async_set_fp_value(STATE_NETATMO_NLC_STAND_BY)
         elif self.device_type == NA_VALVE:
             await self.device.async_therm_set(
@@ -481,7 +517,12 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
 
     async def async_turn_on(self) -> None:
         """Turn the entity on."""
-        await self.device.async_therm_set(STATE_NETATMO_HOME)
+        if self.device_type == NA_NLC:
+            if self._previous_hvac_mode is None:
+                self._previous_hvac_mode = HVACMode.AUTO
+            await self.async_set_hvac_mode(self._previous_hvac_mode)
+        else:
+            await self.device.async_therm_set(STATE_NETATMO_HOME)
         self.async_write_ha_state()
 
     @property
@@ -498,8 +539,16 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
                 getattr(self.device, "therm_setpoint_fp",
                         STATE_NETATMO_NLC_STAND_BY)
             ]
-            self._attr_hvac_mode = HVAC_MAP_NETATMO_NLC[self._attr_preset_mode]
-            self._away = self._attr_hvac_mode == HVAC_MAP_NETATMO_NLC[STATE_NETATMO_AWAY]
+            if self._attr_preset_mode == STATE_NETATMO_NLC_STAND_BY:
+                self._attr_hvac_mode = HVACMode.OFF
+            else:
+                self._attr_hvac_mode = HVAC_MAP_NETATMO_NLC[
+                    getattr(self.device, "therm_setpoint_mode",
+                            STATE_NETATMO_HOME)]
+
+            self._away = self._attr_preset_mode == STATE_NETATMO_NLC_STAND_BY
+            _LOGGER.debug("UPDATE NLC PRESET MODE: %s preset mode: %s mode: %s",
+                          self.device.name, self._attr_preset_mode, self._attr_hvac_mode)
             self.async_write_ha_state()
             return
 

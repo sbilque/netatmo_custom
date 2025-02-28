@@ -266,7 +266,6 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
         if self.device_type is NA_THERM:
             self._attr_hvac_modes.append(HVACMode.OFF)
         elif self.device_type is NA_NLC:
-            self._connected = True  # NLC is always connected
             self._attr_hvac_mode = HVACMode.AUTO
             self._attr_hvac_modes = [
                 HVACMode.HEAT, HVACMode.AUTO, HVACMode.OFF]
@@ -396,7 +395,7 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
             return CURRENT_HVAC_MAP_NETATMO[self._boilerstatus]
         # Maybe it is a valve
         if self.device_type == NA_NLC:
-            attribute = "radiator_power"
+            attribute = "radiators_power"
         else:
             attribute = "heating_power_request"
         if (
@@ -533,8 +532,14 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
     @callback
     def async_update_callback(self) -> None:
         """Update the entity's state."""
+        if not self.device.reachable:
+            if self.available:
+                self._connected = False
+            return
+
+        self._connected = True
+
         if self.device_type == NA_NLC:
-            self._connected = True
             self._attr_preset_mode = NETATMO_MAP_PRESET_NLC[
                 getattr(self.device, "therm_setpoint_fp",
                         STATE_NETATMO_NLC_STAND_BY)
@@ -551,13 +556,6 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
                           self.device.name, self._attr_preset_mode, self._attr_hvac_mode)
             self.async_write_ha_state()
             return
-
-        if not self.device.reachable:
-            if self.available:
-                self._connected = False
-            return
-
-        self._connected = True
 
         self._away_temperature = self.home.get_away_temp()
         self._hg_temperature = self.home.get_hg_temp()

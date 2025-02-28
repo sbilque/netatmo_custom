@@ -362,10 +362,11 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
                     self._attr_preset_mode = NETATMO_MAP_PRESET_NLC[room["therm_setpoint_fp"]]
                 elif room["therm_setpoint_mode"] == STATE_NETATMO_MANUAL:
                     if self.device_type == NA_NLC:
-                        self._attr_hvac_mode = HVACMode.HEAT
-                        self._attr_preset_mode = NETATMO_MAP_PRESET_NLC[room["therm_setpoint_fp"]]
-                        if self._attr_preset_mode == PRESET_OFF:
-                            self._attr_hvac_mode = HVACMode.OFF
+                        if self._attr_hvac_mode == HVACMode.OFF:
+                            self._attr_preset_mode = self._previous_preset_mode
+                        else:
+                            self._attr_hvac_mode = HVACMode.HEAT
+                            self._attr_preset_mode = NETATMO_MAP_PRESET_NLC[room["therm_setpoint_fp"]]
                     else:
                         self._attr_hvac_mode = HVACMode.HEAT
                         self._attr_target_temperature = room["therm_setpoint_temperature"]
@@ -546,12 +547,13 @@ class NetatmoThermostat(NetatmoRoomEntity, ClimateEntity):
             ]
             if self._attr_preset_mode == STATE_NETATMO_NLC_STAND_BY:
                 self._attr_hvac_mode = HVACMode.OFF
+                self._attr_preset_mode = self._previous_preset_mode
             else:
                 self._attr_hvac_mode = HVAC_MAP_NETATMO_NLC[
                     getattr(self.device, "therm_setpoint_mode",
                             STATE_NETATMO_HOME)]
 
-            self._away = self._attr_preset_mode == STATE_NETATMO_NLC_STAND_BY
+            self._away = self._attr_preset_mode == STATE_NETATMO_NLC_AWAY
             _LOGGER.debug("UPDATE NLC PRESET MODE: %s preset mode: %s mode: %s",
                           self.device.name, self._attr_preset_mode, self._attr_hvac_mode)
             self.async_write_ha_state()
